@@ -97,6 +97,8 @@ class AppointmentService:
 
         return available_slots
 
+
+
 # Book appointment
     def book_appointment( self, request: AppointmentCreate ):
         """
@@ -106,6 +108,7 @@ class AppointmentService:
         - appointment is not in the past
         - slot is available
         """
+
         try:
             doctor = (
                 self.db.query(Doctor)
@@ -115,6 +118,21 @@ class AppointmentService:
 
             if doctor is None:
                 raise ValueError("Doctor not found.")
+
+         # check if the slot is already booked
+            existing_appointment = (
+                self.db.query(Appointment)
+                .filter(
+                    Appointment.doctor_id == doctor.id,
+                    Appointment.appointment_time == request.appointment_time,
+                    Appointment.status == AppointmentStatus.BOOKED,
+                )
+                .first()
+            )
+
+            if existing_appointment:
+                raise ValueError("This appointment slot has already been booked.")
+
 
             patient = (
                 self.db.query(Patient)

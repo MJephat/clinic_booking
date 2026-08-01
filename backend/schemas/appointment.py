@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -11,6 +11,7 @@ class AppointmentCreate(BaseModel):
 
     doctor_id: UUID
     appointment_time: datetime
+
 # cancel appointment schema
 class AppointmentCancel(BaseModel):
     reason: str = Field(..., min_length=5, max_length=255)
