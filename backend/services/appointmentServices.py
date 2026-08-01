@@ -97,6 +97,7 @@ class AppointmentService:
 
         return available_slots
 
+# Book appointment
     def book_appointment( self, request: AppointmentCreate ):
         """
         Creates a new appointment after validating:
@@ -175,3 +176,80 @@ class AppointmentService:
         self.db.refresh(appointment)
 
         return appointment
+    
+# cancel appointment
+    def cancel_appointment(
+        self,
+        appointment_id: UUID,
+        reason: str,
+    ):
+        try:
+
+            appointment = (
+                self.db.query(Appointment)
+                .filter(Appointment.id == appointment_id)
+                .first()
+            )
+
+            if appointment is None:
+                raise ValueError("Appointment not found.")
+
+            if appointment.status == AppointmentStatus.CANCELLED:
+                raise ValueError("Appointment has already been cancelled.")
+
+            appointment.status = AppointmentStatus.CANCELLED
+            appointment.cancel_reason = reason
+
+            self.db.commit()
+            self.db.refresh(appointment)
+
+            return appointment
+
+        except Exception:
+            self.db.rollback()
+            raise
+
+# reschedule appointment
+    def reschedule_appointment(
+        self,
+        appointment_id: UUID,
+        new_appointment_time: datetime,
+    ):
+        try:
+
+            appointment = (
+                self.db.query(Appointment)
+                .filter(Appointment.id == appointment_id)
+                .first()
+            )
+
+            if appointment is None:
+                raise ValueError("Appointment not found.")
+
+            if appointment.status == AppointmentStatus.CANCELLED:
+                raise ValueError("Cancelled appointments cannot be rescheduled.")
+
+            if new_appointment_time < datetime.now():
+                raise ValueError("Cannot reschedule to a past time.")
+
+            available_slots = self.get_available_slots(
+                appointment.doctor_id,
+                new_appointment_time.date(),
+            )
+
+            if available_slots is None:
+                raise ValueError("Doctor not found.")
+
+            if new_appointment_time not in available_slots:
+                raise ValueError("Selected slot is unavailable.")
+
+            appointment.appointment_time = new_appointment_time
+
+            self.db.commit()
+            self.db.refresh(appointment)
+
+            return appointment
+
+        except Exception:
+            self.db.rollback()
+            raise
