@@ -2,7 +2,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import sessionmaker
 
-from app.config import DATABASE_URL
+from backend.config import DATABASE_URL
+
+
+def init_db() -> None:
+    from backend.models import Appointment, Doctor, Patient, WorkingHours  # noqa: F401
+
+    Base.metadata.create_all(bind=engine)
 
 engine = create_engine(
     DATABASE_URL,

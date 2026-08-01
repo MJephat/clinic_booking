@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 
-app = FastAPI(
-    title="Clinic Booking API",
-    version="1.0.0"
-)
+# Import models so SQLAlchemy registers them
+from backend import models
+from backend.database import Base, engine, init_db
+from backend.routers import doctors, appointments
 
+init_db()
 
-@app.get("/")
-def home():
-    return { "message": "Clinic Booking API"}
+app = FastAPI(title="Clinic Booking API")
+
+app.include_router(doctors.router)
+app.include_router(appointments.router)
