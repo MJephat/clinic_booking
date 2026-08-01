@@ -15,7 +15,7 @@ class WorkingHours(Base):
     __tablename__ = "working_hours"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    doctor_id: Mapped[int] = mapped_column( ForeignKey("doctors.id", ondelete="CASCADE"))
+    doctor_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("doctors.id", ondelete="CASCADE"))
 
     weekday: Mapped[int] = mapped_column(Integer, nullable=False)
     start_time: Mapped[time] = mapped_column(Time, nullable=False)
