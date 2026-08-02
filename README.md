@@ -2,7 +2,7 @@
 A RESTful clinic appointment booking system built with FastAPI, PostgreSQL, SQLAlchemy, and Alembic. The API allows patients to book, cancel, and reschedule appointments while ensuring doctors cannot be double-booked and appointments are only made during working hours.
 
 ## Live Application
-https://clinic-booking-0fv5.onrender.com
+https://clinic-booking-0fv5.onrender.com/docs
 
 ## API Documentation
 once deployed, the interactive API documentaion is available at:
