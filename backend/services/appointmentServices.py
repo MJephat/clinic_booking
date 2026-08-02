@@ -1,4 +1,4 @@
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -168,8 +168,11 @@ class AppointmentService:
             self.db.rollback()
             raise
 
-        if request.appointment_time < datetime.now():
-            raise ValueError("Cannot book an appointment in the past.")
+        # if request.appointment_time < datetime.now():
+        #     raise ValueError("Cannot book an appointment in the past.")
+
+        if request.appointment_time <datetime.now() + timedelta(hours=1):
+            raise ValueError("Appointments must be booked at least one hour in advance.")
 
         available_slots = self.get_available_slots(
             request.doctor_id,
@@ -247,9 +250,9 @@ class AppointmentService:
             if appointment.status == AppointmentStatus.CANCELLED:
                 raise ValueError("Cancelled appointments cannot be rescheduled.")
 
-            if new_appointment_time < datetime.now():
-                raise ValueError("Cannot reschedule to a past time.")
-
+            if new_appointment_time < datetime.now() + timedelta(hours=1):
+                raise ValueError( "Appointments must be booked at least one hour in advance."
+ )
             available_slots = self.get_available_slots(
                 appointment.doctor_id,
                 new_appointment_time.date(),
@@ -271,3 +274,18 @@ class AppointmentService:
         except Exception:
             self.db.rollback()
             raise
+
+# get patient appointments
+    def get_patient_appointments(self, patient_id: UUID):
+        appointments = (
+            self.db.query(Appointment)
+            .filter(
+                Appointment.patient_id == patient_id,
+                Appointment.status == AppointmentStatus.BOOKED,
+                Appointment.appointment_time >= datetime.now(),
+            )
+            .order_by(Appointment.appointment_time.asc())
+            .all()
+        )
+
+        return appointments
