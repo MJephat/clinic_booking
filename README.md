@@ -81,6 +81,8 @@ This approach minimizes manual deployment steps and provides consistent, repeata
     source venv/bin/activate
 
     pip install -r requirements.txt
+    
+    python -m backend.seed.seed_data
 
     alembic upgrade head
 
