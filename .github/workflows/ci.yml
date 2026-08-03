@@ -64,18 +64,18 @@ jobs:
         run: |
           pytest
 
-deploy:
+  deploy:
 
-  needs: test
+    needs: test
 
-  if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
 
-  runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  steps:
+    steps:
 
-    - name: Trigger Render Deploy
-      run: |
-        curl "$RENDER_DEPLOY_HOOK"
-      env:
-        RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+      - name: Trigger Render Deploy
+        run: |
+          curl "$RENDER_DEPLOY_HOOK"
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
