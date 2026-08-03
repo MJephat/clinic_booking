@@ -73,6 +73,11 @@ jobs:
 
       - name: Trigger Render Deploy
         run: |
-          curl "$RENDER_DEPLOY_HOOK"
+           if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+              echo "Secret is empty"
+              exit 1
+            else
+              echo "Secret exists"
+            fi
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
