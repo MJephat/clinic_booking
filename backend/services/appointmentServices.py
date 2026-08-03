@@ -100,80 +100,33 @@ class AppointmentService:
 
 
 # Book appointment
-    def book_appointment( self, request: AppointmentCreate ):
-        """
-        Creates a new appointment after validating:
-        - doctor exists
-        - patient exists (or creates one)
-        - appointment is not in the past
-        - slot is available
-        """
+def book_appointment(self, request: AppointmentCreate):
+    """
+    Creates a new appointment after validating:
+    - doctor exists
+    - patient exists (or creates one)
+    - appointment is at least one hour in the future
+    - slot is available
+    """
 
-        try:
-            doctor = (
-                self.db.query(Doctor)
-                .filter(Doctor.id == request.doctor_id)
-                .first()
+    try:
+        # Check doctor exists
+        doctor = (
+            self.db.query(Doctor)
+            .filter(Doctor.id == request.doctor_id)
+            .first()
+        )
+
+        if doctor is None:
+            raise ValueError("Doctor not found.")
+
+        # Validate appointment time
+        if request.appointment_time < datetime.now() + timedelta(hours=1):
+            raise ValueError(
+                "Appointments must be booked at least one hour in advance."
             )
 
-            if doctor is None:
-                raise ValueError("Doctor not found.")
-
-         # check if the slot is already booked
-            existing_appointment = (
-                self.db.query(Appointment)
-                .filter(
-                    Appointment.doctor_id == doctor.id,
-                    Appointment.appointment_time == request.appointment_time,
-                    Appointment.status == AppointmentStatus.BOOKED,
-                )
-                .first()
-            )
-
-            if existing_appointment:
-                raise ValueError("This appointment slot has already been booked.")
-
-
-            patient = (
-                self.db.query(Patient)
-                .filter(Patient.email == request.patient_email)
-                .first()
-            )
-
-            if patient is None:
-                patient = Patient(
-                name=request.patient_name,
-                email=request.patient_email,
-                phone=request.patient_phone,
-            )
-
-                self.db.add(patient)
-                self.db.flush()  # Generates the patient ID without committing
-            # validation...
-
-            appointment = Appointment(
-                doctor_id=doctor.id,
-                patient_id=patient.id,
-                appointment_time=request.appointment_time,
-                status=AppointmentStatus.BOOKED,
-            )
-
-            self.db.add(appointment)
-            self.db.commit()
-            self.db.refresh(appointment)
-
-            return appointment
-
-        except Exception:
-            self.db.rollback()
-            raise
-
-        # if request.appointment_time < datetime.now():
-        #     raise ValueError("Cannot book an appointment in the past.")
-
-        if request.appointment_time <datetime.now() + timedelta(hours=1):
-            raise ValueError("Appointments must be booked at least one hour in advance.")
-
+        # Check slot availability
         available_slots = self.get_available_slots(
             request.doctor_id,
             request.appointment_time.date(),
@@ -185,6 +138,23 @@ class AppointmentService:
         if request.appointment_time not in available_slots:
             raise ValueError("Selected appointment slot is unavailable.")
 
+        # Check patient
+        patient = (
+            self.db.query(Patient)
+            .filter(Patient.email == request.patient_email)
+            .first()
+        )
+
+        if patient is None:
+            patient = Patient(
+                name=request.patient_name,
+                email=request.patient_email,
+                phone=request.patient_phone,
+            )
+            self.db.add(patient)
+            self.db.flush()
+
+        # Create appointment
         appointment = Appointment(
             doctor_id=doctor.id,
             patient_id=patient.id,
@@ -197,6 +167,10 @@ class AppointmentService:
         self.db.refresh(appointment)
 
         return appointment
+
+    except Exception:
+        self.db.rollback()
+        raise
     
 # cancel appointment
     def cancel_appointment(
